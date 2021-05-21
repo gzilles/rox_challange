@@ -1,0 +1,5 @@
+# Ignore Windows system files
+desktop.ini
+
+# Ignore sqlite_db testing folder
+sqlite_db
