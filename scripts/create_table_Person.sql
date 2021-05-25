@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS Person.Person
 (
-BusinessEntityID INT(5),
+BusinessEntityID INT(5) NOT NULL,
 PersonType VARCHAR(2),
 NameStyle INT(1),
 Title VARCHAR(4),
