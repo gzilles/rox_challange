@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS Sales.SalesOrderDetail
 (
-SalesOrderID INT(5),
-SalesOrderDetailID INT(6) ,
+SalesOrderID INT(5) NOT NULL,
+SalesOrderDetailID INT(6) NOT NULL,
 CarrierTrackingNumber VARCHAR(12),
 OrderQty INT(2),
 ProductID INT(3),
