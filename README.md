@@ -10,9 +10,13 @@ Este projeto propõe uma infraestrutura na nuvem para análise de dados da empre
 
 Escolhemos a plataforma de serviços na nuvem AWS para criar a infraestrutura necessária por oferecer o melhor custo-benefício das soluções utilizadas. O banco de dados escolhido foi o MySQL 8.0.2 que é oferecido de graça durante 12 meses na Amazon RDS Free Tier. A cada mês são oferecidas 750 horas do Amazon RDS em uma instância Single-AZ db.t2.micro com 20GB de armazenamento e backup automático, o que atende perfeitamente as nossas necessidades.
 
-IMAGE
+![alt text](https://github.com/gzilles/rox_challange/blob/main/img/mysql_summary.JPG)
 
-Após uma análise inicial das tabelas a serem importadas para o banco e com base no diagrama de modelagem de dados enviado pelo cliente, foi decidida a criação das databases Production, Sales e Person com as respectivas tabelas, colunas, chaves primárias e chaves estrangeiras.
+Essa foi a topologia enviada pelo cliente do como os dados são relacionados.
+
+![alt text](https://github.com/gzilles/rox_challange/blob/main/img/modelagem_dados.jpg)
+
+Após uma análise inicial dos [arquivos](https://github.com/gzilles/rox_challange/tree/main/csv_files) a serem importadas para o banco e com base no diagrama de modelagem de dados do cliente, foi decidida a criação das tabelas em databases sepradas Production, Sales e Person, com as respectivas colunas, chaves primárias e chaves estrangeiras conforme demonstado nos [scripts SQL](https://github.com/gzilles/rox_challange/tree/main/scripts) abaixo. 
 
 ```
 CREATE DATABASE IF NOT EXISTS Production
@@ -154,20 +158,24 @@ FOREIGN KEY (ProductID) REFERENCES Production.Product(ProductID)
 
 A modelagem do banco de dados ficou desenhada da seguinte forma depois da criação dos databases e tabelas.
 
-IMAGE
+![alt text](https://github.com/gzilles/rox_challange/blob/main/img/modelo_fisico.JPG)
 
-Foi criado um bucket no Amazon S3 chamado rox-challange-landing-zone-us-east-1 para receber os seguintes arquivos que serão importados para as tabelas do banco:
+Foi criado um bucket no Amazon S3 chamado rox-challange-landing-zone-us-east-1 para receber os seguintes arquivos que serão importados para as tabelas do banco através da execução do [script](https://github.com/gzilles/rox_challange/blob/main/ingest_csv_to_s3.py).
 
 - Sales.SpecialOfferProduct.csv
 - Production.Product.csv
 - Sales.SalesOrderHeader.csv
 - Sales.Customer.csv
-- Person.Person.csv
-- Sales.SalesOrderDetail.csv
+- Person.Personhttps://github.com/gzilles/rox_challange/blob/main/lambda_function.py. será executado lendo csv
+- SOrderDetainl.csv
 
-Foram criadas funções Lamba para cada arquivo, assim quando ele for criado dentro da sua respectiva pasta dentro do S3, a função será executada através de uma trigger do S3 e arquivo será lido, manipulado e ingerido na tabela correta.
+Foram criadas funções Lamba para cada arquivo, assim quando ele for criado dentro da sua respectiva pasta dentro do S3, a função será iniciada através de uma trigger do S3 e o [script](https://github.com/gzilles/rox_challange/blob/main/lambda_function.py) será executado lendo arquivo, manipulando e ingerindo os dados na tabela correta.
 
-IMAGE
+![alt text](https://github.com/gzilles/rox_challange/blob/main/img/lambda_overview.JPG)
+
+Abaixo um exemplo da trigger que é executada toda vez que um arquivo é criado por uma solicitação PUT no bucket escolhido, com a pasta de destino como prefixo da sua key e o tipo do arquivo com sufixo para evitar disparos desnecessários. Em caso de erro na execução é importante observar se foi criada uma Role com as devidas permissões de leitura no S3 e escrita no Clod Watch Logs, se o tempo de timeout e a memória não estão sendo estourados acabando com a execução da tarefa.
+
+![alt text](https://github.com/gzilles/rox_challange/blob/main/img/lamda_trigger.JPG)
 
 O código executado pela função lambda é o seguinte:
 
@@ -247,8 +255,15 @@ def lambda_handler(event, context):
     }
 ```
 
-O layer é uma camada com os pacotes adicionais necessários para execução do nosso script Python. Os nossos pacotes serão copiados para a pasta X no bucket e pode ser selecionado na hora criação.
-IMAGE
+O layer é uma camada com os pacotes adicionais necessários para execução do nosso script Python. O [arquivo ZIP](https://github.com/gzilles/rox_challange/blob/main/aws-lambda-layer-python/python.zip) com  nossos pacotes serão copiados para a pasta Tools no bucket e pode ser selecionado na hora criação. 
+
+Abaixo temos uma imagem de como criar a layer com o upload do arquivo ZIP ou apontando o caminho dele no S3. Podemos adicionar também as versões compatíveis com nosso pacote para evitar problemas futuros em sua reutilização.
+
+![alt text](https://github.com/gzilles/rox_challange/blob/main/img/add_layer.JPG)
+
+Depois de criada ela deve ser adicionada na página Function Overview em layers. 
+
+![alt text](https://github.com/gzilles/rox_challange/blob/main/img/create_lambda_layer.JPG)
 
 ## Análise de dados
 
@@ -316,3 +331,11 @@ FROM SalesOrderHeader AS soh
 WHERE DATE(OrderDate) BETWEEN DATE('2011-09-01') AND DATE('2011-09-30') AND TotalDue > 1.000
 ORDER BY TotalDue DESC
 ```
+
+## Criação de um relatório em qualquer ferramenta de visualização de dados
+
+O próximo passo seria criar o relatório em uma ferramenta de visualição de dados, mas acabou ficando fora do escopo por falta de recuros do projeto. Uma próxima fase será executada para e entrega da solução conforme esperado.
+
+### Observações
+
+Todos os arquivos e scripts encontram-se nessse repositório e podem ser copiados através de um `git clone` para testes e melhorias.
