@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS Sales.SalesOrderHeader
 (
-SalesOrderID INT(5),
+SalesOrderID INT(5) NOT NULL,
 RevisionNumber INT(1),
 OrderDate DATE,
 DueDate DATE,
