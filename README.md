@@ -12,11 +12,11 @@ Escolhemos a plataforma de serviços na nuvem AWS para criar a infraestrutura ne
 
 ![alt text](https://github.com/gzilles/rox_challange/blob/main/img/mysql_summary.JPG)
 
-Essa foi a topologia enviada pelo cliente do como os dados são relacionados.
+Essa foi a topologia enviada pelo cliente de como os dados são relacionados.
 
 ![alt text](https://github.com/gzilles/rox_challange/blob/main/img/modelagem_dados.jpg)
 
-Após uma análise inicial dos [arquivos](https://github.com/gzilles/rox_challange/tree/main/csv_files) a serem importadas para o banco e com base no diagrama de modelagem de dados do cliente, foi decidida a criação das tabelas em databases sepradas Production, Sales e Person, com as respectivas colunas, chaves primárias e chaves estrangeiras conforme demonstado nos [scripts SQL](https://github.com/gzilles/rox_challange/tree/main/scripts) abaixo. 
+Após uma análise inicial dos [arquivos](https://github.com/gzilles/rox_challange/tree/main/csv_files) a serem importadas para o banco e com base no diagrama de modelagem de dados do cliente, foi decidida a criação das tabelas em databases separadas Production, Sales e Person, com as respectivas colunas, chaves primárias e chaves estrangeiras conforme demonstado nos [scripts SQL](https://github.com/gzilles/rox_challange/tree/main/scripts) abaixo. Foi utilizado um [script](https://github.com/gzilles/rox_challange/blob/main/bytes_counter.py) criado para contar o numero de bytes de cada coluna e auxiliar na modelagem. A criação se dará através da execução de um [script pyhton](https://github.com/gzilles/rox_challange/blob/main/create_tables.py) que se conecta ao banco de dados e executa as querys contidas na pasta.
 
 ```
 CREATE DATABASE IF NOT EXISTS Production
@@ -160,13 +160,13 @@ A modelagem do banco de dados ficou desenhada da seguinte forma depois da criaç
 
 ![alt text](https://github.com/gzilles/rox_challange/blob/main/img/modelo_fisico.JPG)
 
-Foi criado um bucket no Amazon S3 chamado rox-challange-landing-zone-us-east-1 para receber os seguintes arquivos que serão importados para as tabelas do banco através da execução do [script](https://github.com/gzilles/rox_challange/blob/main/ingest_csv_to_s3.py).
+Foi criado um bucket no Amazon S3 chamado rox-challange-landing-zone-us-east-1 para receber os seguintes arquivos que serão importados para as tabelas do banco através da execução de um [script](https://github.com/gzilles/rox_challange/blob/main/ingest_csv_to_s3.py).
 
 - Sales.SpecialOfferProduct.csv
 - Production.Product.csv
 - Sales.SalesOrderHeader.csv
 - Sales.Customer.csv
-- Person.Personhttps://github.com/gzilles/rox_challange/blob/main/lambda_function.py. será executado lendo csv
+- Person.Person
 - SOrderDetainl.csv
 
 Foram criadas funções Lamba para cada arquivo, assim quando ele for criado dentro da sua respectiva pasta dentro do S3, a função será iniciada através de uma trigger do S3 e o [script](https://github.com/gzilles/rox_challange/blob/main/lambda_function.py) será executado lendo arquivo, manipulando e ingerindo os dados na tabela correta.
@@ -177,7 +177,7 @@ Abaixo um exemplo da trigger que é executada toda vez que um arquivo é criado 
 
 ![alt text](https://github.com/gzilles/rox_challange/blob/main/img/lamda_trigger.JPG)
 
-O código executado pela função lambda é o seguinte:
+O código executado pela função lambda é o seguinte e tem como entrada a resposta do evento de criação do arquivo de onde tira informações importantes para localiza-los e retorna um status code 200 no final da execução:
 
 ```
 # External libraries
@@ -255,9 +255,9 @@ def lambda_handler(event, context):
     }
 ```
 
-O layer é uma camada com os pacotes adicionais necessários para execução do nosso script Python. O [arquivo ZIP](https://github.com/gzilles/rox_challange/blob/main/aws-lambda-layer-python/python.zip) com  nossos pacotes serão copiados para a pasta Tools no bucket e pode ser selecionado na hora criação. 
+O layer é uma camada com os pacotes adicionais necessários para execução do nosso script Python. O [arquivo ZIP](https://github.com/gzilles/rox_challange/blob/main/aws-lambda-layer-python/python.zip) com  nossos pacotes será copiados para a pasta Tools no bucket e pode ser selecionado na hora criação. 
 
-Abaixo temos uma imagem de como criar a layer com o upload do arquivo ZIP ou apontando o caminho dele no S3. Podemos adicionar também as versões compatíveis com nosso pacote para evitar problemas futuros em sua reutilização.
+Abaixo temos uma imagem demonstrando como criar a layer com o upload do arquivo ZIP ou apontando o caminho dele no S3. Podemos adicionar também as versões compatíveis com nosso pacote para evitar problemas futuros em sua reutilização.
 
 ![alt text](https://github.com/gzilles/rox_challange/blob/main/img/add_layer.JPG)
 
