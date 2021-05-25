@@ -61,7 +61,7 @@ PRIMARY KEY (ProductID)
 ```
 CREATE TABLE IF NOT EXISTS Person.Person
 (
-BusinessEntityID INT(5),
+BusinessEntityID INT(5) NOT NULL,
 PersonType VARCHAR(2),
 NameStyle INT(1),
 Title VARCHAR(4),
@@ -94,7 +94,7 @@ FOREIGN KEY (PersonID) REFERENCES Person.Person(BusinessEntityID)
 ```
 CREATE TABLE IF NOT EXISTS Sales.SalesOrderHeader
 (
-SalesOrderID INT(5),
+SalesOrderID INT(5) NOT NULL,
 RevisionNumber INT(1),
 OrderDate DATE,
 DueDate DATE,
@@ -138,8 +138,8 @@ FOREIGN KEY (ProductID) REFERENCES Production.Product(ProductID)
 ```
 CREATE TABLE IF NOT EXISTS Sales.SalesOrderDetail
 (
-SalesOrderID INT(5),
-SalesOrderDetailID INT(6) ,
+SalesOrderID INT(5) NOT NULL,
+SalesOrderDetailID INT(6) NOT NULL,
 CarrierTrackingNumber VARCHAR(12),
 OrderQty INT(2),
 ProductID INT(3),
@@ -167,7 +167,7 @@ Foi criado um bucket no Amazon S3 chamado rox-challange-landing-zone-us-east-1 p
 - Sales.SalesOrderHeader.csv
 - Sales.Customer.csv
 - Person.Person
-- SOrderDetainl.csv
+- Sales.SalesOrderDetail.csv
 
 Foram criadas funções Lamba para cada arquivo, assim quando ele for criado dentro da sua respectiva pasta dentro do S3, a função será iniciada através de uma trigger do S3 e o [script](https://github.com/gzilles/rox_challange/blob/main/lambda_function.py) será executado lendo arquivo, manipulando e ingerindo os dados na tabela correta.
 
