@@ -3,3 +3,12 @@ desktop.ini
 
 # Ignore sqlite_db testing folder
 sqlite_db
+
+# Ignore aws-lambda-layer-python folder
+aws-lambda-layer-python
+
+# Ignore backup folder
+backup
+
+# Ignore instruction folder
+instruction
