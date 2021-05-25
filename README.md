@@ -1,23 +1,29 @@
 # rox_challange
 
-Este projeto propõe uma infraestrutura na nuvem para análise de dados da empresa fictícia Rollerbike que requisitou nossos serviços de engenharia de dados para otimizar esse processo. Nele vamos trabalhar os conceitos de:
+Este projeto propÃµe uma infraestrutura na nuvem para anÃ¡lise de dados da empresa fictÃ­cia Rollerbike que requisitou nossos serviÃ§os de engenharia de dados para otimizar esse processo. Nele vamos trabalhar os conceitos de:
 
 - Modelagem conceitual dos dados
-- Criação da infraestrutura necessária
-- Criação de um processo de ETL para importar os dados para o banco de dados
-- Desenvolvimento de SCRIPT para análise de dados
-- Criação de um relatório em qualquer ferramenta de visualização de dados
+- CriaÃ§Ã£o da infraestrutura necessÃ¡ria
+- CriaÃ§Ã£o de um processo de ETL para importar os dados para o banco de dados
+- Desenvolvimento de SCRIPT para anÃ¡lise de dados
+- CriaÃ§Ã£o de um relatÃ³rio em qualquer ferramenta de visualizaÃ§Ã£o de dados
 
-Escolhemos a plataforma de serviços na nuvem AWS para criar a infraestrutura necessária por oferecer o melhor custo-benefício das soluções utilizadas. O banco de dados escolhido foi o MySQL 8.0.2 que é oferecido de graça durante 12 meses na Amazon RDS Free Tier. A cada mês são oferecidas 750 horas do Amazon RDS em uma instância Single-AZ db.t2.micro com 20GB de armazenamento e backup automático, o que atende perfeitamente as nossas necessidades.
+Escolhemos a plataforma de serviÃ§os na nuvem AWS para criar a infraestrutura necessÃ¡ria por oferecer o melhor custo-benefÃ­cio das soluÃ§Ãµes utilizadas. O banco de dados escolhido foi o MySQL 8.0.2 que Ã© oferecido de graÃ§a durante 12 meses na Amazon RDS Free Tier. A cada mÃªs sÃ£o oferecidas 750 horas do Amazon RDS em uma instÃ¢ncia Single-AZ db.t2.micro com 20GB de armazenamento e backup automÃ¡tico, o que atende perfeitamente as nossas necessidades.
 
 IMAGE
 
-Após uma análise inicial das tabelas a serem importadas para o banco e com base no diagrama de modelagem de dados enviado pelo cliente, foi decidida a criação das databases Production, Sales e Person com as respectivas tabelas, colunas, chaves primárias e chaves estrangeiras.
+ApÃ³s uma anÃ¡lise inicial das tabelas a serem importadas para o banco e com base no diagrama de modelagem de dados enviado pelo cliente, foi decidida a criaÃ§Ã£o das databases Production, Sales e Person com as respectivas tabelas, colunas, chaves primÃ¡rias e chaves estrangeiras.
 
+```
 CREATE DATABASE IF NOT EXISTS Production
+```
+```
 CREATE DATABASE IF NOT EXISTS Person
+```
+```
 CREATE DATABASE IF NOT EXISTS Sales
-
+```
+```
 CREATE TABLE IF NOT EXISTS Production.Product
 (
 ProductID INT(3) NOT NULL,
@@ -47,7 +53,8 @@ rowguid VARCHAR(36),
 ModifiedDate DATETIME,
 PRIMARY KEY (ProductID)
 )
-
+```
+```
 CREATE TABLE IF NOT EXISTS Person.Person
 (
 BusinessEntityID INT(5),
@@ -65,6 +72,8 @@ rowguid VARCHAR(36),
 ModifiedDate DATETIME,
 PRIMARY KEY(BusinessEntityID)
 )
+```
+```
 CREATE TABLE IF NOT EXISTS Sales.Customer
 (
 CustomerID INT(5) NOT NULL,
@@ -77,7 +86,8 @@ ModifiedDate DATETIME,
 PRIMARY KEY (CustomerID)
 FOREIGN KEY (PersonID) REFERENCES Person.Person(BusinessEntityID)
 )
-
+```
+```
 CREATE TABLE IF NOT EXISTS Sales.SalesOrderHeader
 (
 SalesOrderID INT(5),
@@ -109,7 +119,8 @@ ModifiedDate DATETIME,
 PRIMARY KEY (SalesOrderID),
 FOREIGN KEY (CustomerID) REFERENCES Sales.Customer(CustomerID)
 )
-
+```
+```
 CREATE TABLE IF NOT EXISTS Sales.SpecialOfferProduct
 (
 SpecialOfferID INT(2) NOT NULL,
@@ -119,7 +130,8 @@ ModifiedDate DATETIME,
 PRIMARY KEY (SpecialOfferID, ProductID),
 FOREIGN KEY (ProductID) REFERENCES Production.Product(ProductID)
 )
-
+```
+```
 CREATE TABLE IF NOT EXISTS Sales.SalesOrderDetail
 (
 SalesOrderID INT(5),
@@ -138,8 +150,13 @@ FOREIGN KEY (SalesOrderID) REFERENCES Sales.SalesOrderHeader(SalesOrderID),
 FOREIGN KEY (SpecialOfferID) REFERENCES Sales.SpecialOfferProduct(SpecialOfferID),
 FOREIGN KEY (ProductID) REFERENCES Production.Product(ProductID)
 )
+```
 
-Foi criado um bucket no Amazon S3 chamado   rox-challange-landing-zone-us-east-1 para receber os seguintes arquivos que serão importados para as tabelas do banco:
+A modelagem do banco de dados ficou desenhada da seguinte forma depois da criaÃ§Ã£o dos databases e tabelas.
+
+IMAGE
+
+Foi criado um bucket no Amazon S3 chamado rox-challange-landing-zone-us-east-1 para receber os seguintes arquivos que serÃ£o importados para as tabelas do banco:
 
 - Sales.SpecialOfferProduct.csv
 - Production.Product.csv
@@ -148,12 +165,13 @@ Foi criado um bucket no Amazon S3 chamado   rox-challange-landing-zone-us-east-1
 - Person.Person.csv
 - Sales.SalesOrderDetail.csv
 
-Foram criadas funções Lamba para cada arquivo, assim quando ele for criado dentro da sua respectiva pasta dentro do S3, a função será executada através de uma trigger e ele será lido, manipulado e ingerido na tabela correta.
+Foram criadas funÃ§Ãµes Lamba para cada arquivo, assim quando ele for criado dentro da sua respectiva pasta dentro do S3, a funÃ§Ã£o serÃ¡ executada atravÃ©s de uma trigger do S3 e arquivo serÃ¡ lido, manipulado e ingerido na tabela correta.
 
 IMAGE
 
-O código executado pela função lambda é o seguinte:
+O cÃ³digo executado pela funÃ§Ã£o lambda Ã© o seguinte:
 
+```
 # External libraries
 import json
 import csv
@@ -227,24 +245,28 @@ def lambda_handler(event, context):
         'statusCode': 200,
         'body': json.dumps('Upload compleated')
     }
+```
 
-O layer é uma camada com os pacotes adicionais necessários para execução do nosso script Python. Os nossos pacotes serão copiados para a pasta X no bucket e pode ser selecionado na hora criação.
+O layer Ã© uma camada com os pacotes adicionais necessÃ¡rios para execuÃ§Ã£o do nosso script Python. Os nossos pacotes serÃ£o copiados para a pasta X no bucket e pode ser selecionado na hora criaÃ§Ã£o.
 IMAGE
 
-## Análise de dados
+## AnÃ¡lise de dados
 
-Com base na solução implantada responda aos seguintes questionamentos:
+Com base na soluÃ§Ã£o implantada responda aos seguintes questionamentos:
 
-1. Escreva uma query que retorna a quantidade de linhas na tabela Sales.SalesOrderDetail pelo campo SalesOrderID, desde que tenham pelo menos três linhas de detalhes
+1. Escreva uma query que retorna a quantidade de linhas na tabela Sales.SalesOrderDetail pelo campo SalesOrderID, desde que tenham pelo menos trÃªs linhas de detalhes
 
+````
 SELECT SalesOrderID as id, 
 COUNT(*) AS qtd 
 FROM Sales.SalesOrderDetail as sod
 GROUP BY SalesOrderID
 HAVING qtd >= 3
+````
 
-2. Escreva uma query que ligue as tabelas Sales.SalesOrderDetail, Sales.SpecialOfferProduct e Production.Product e retorne os 3 produtos (Name) mais vendidos (pela soma de OrderQty), agrupados pelo número de dias para manufatura (DaysToManufacture).
+2. Escreva uma query que ligue as tabelas Sales.SalesOrderDetail, Sales.SpecialOfferProduct e Production.Product e retorne os 3 produtos (Name) mais vendidos (pela soma de OrderQty), agrupados pelo nÃºmero de dias para manufatura (DaysToManufacture).
 
+```
 SELECT * FROM(
   SELECT p.DaysToManufacture AS dtm,
          ROW_NUMBER() OVER(PARTITION BY p.DaysToManufacture ORDER BY sum(sod.OrderQty) DESC) as pos,
@@ -256,9 +278,11 @@ SELECT * FROM(
   GROUP BY name
   ) as by_pos
 WHERE pos <= 3
+```
 
 3. Escreva uma query ligando as tabelas Person.Person, Sales.Customer e Sales.SalesOrderHeader de forma a obter uma lista de nomes de clientes e uma contagem de pedidos efetuados.
 
+```
 SELECT c.CustomerID as id, 
        CONCAT(p.FirstName, ' ', p.LastName) as name, 
        COUNT(*) AS qtd 
@@ -267,9 +291,11 @@ INNER JOIN	Sales.Customer as c ON soh.CustomerID = c.CustomerID
 INNER JOIN Person.Person as p ON c.PersonID = p.BusinessEntityID 
 GROUP BY c.PersonID
 ORDER BY qtd DESC
+```
 
 4. Escreva uma query usando as tabelas Sales.SalesOrderHeader, Sales.SalesOrderDetail e Production.Product, de forma a obter a soma total de produtos (OrderQty) por ProductID e OrderDate.
 
+```
 SELECT sod.ProductID as id, 
        p.Name as name,
        sum(OrderQty) OVER(PARTITION BY sod.ProductID) AS qtd_id,
@@ -280,15 +306,13 @@ INNER JOIN Sales.SalesOrderHeader as soh ON sod.SalesOrderID  = soh.SalesOrderID
 INNER JOIN Production.Products AS p ON sod.ProductID = p.ProductID 
 GROUP BY sod.ProductID, soh.OrderDate
 ORDER BY soh.OrderDate
+```
 
-5. Escreva uma query mostrando os campos SalesOrderID, OrderDate e TotalDue da tabela Sales.SalesOrderHeader. Obtenha apenas as linhas onde a ordem tenha sido feita durante o mês de setembro/2011 e o total devido esteja acima de 1.000. Ordene pelo total devido decrescente.
+5. Escreva uma query mostrando os campos SalesOrderID, OrderDate e TotalDue da tabela Sales.SalesOrderHeader. Obtenha apenas as linhas onde a ordem tenha sido feita durante o mÃªs de setembro/2011 e o total devido esteja acima de 1.000. Ordene pelo total devido decrescente.
 
+```
 SELECT SalesOrderID, DATE(OrderDate), TotalDue 
 FROM SalesOrderHeader AS soh 
 WHERE DATE(OrderDate) BETWEEN DATE('2011-09-01') AND DATE('2011-09-30') AND TotalDue > 1.000
 ORDER BY TotalDue DESC
-
-
-
-
-
+```
